@@ -1,19 +1,7 @@
-# Data files
-raw.csv
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
+data/
+*.csv
+.venv/
 venv/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
+__pycache__/
 .DS_Store
-Thumbs.db
+.vscode/
