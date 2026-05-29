@@ -1,21 +1,22 @@
-#Import the neccesary libraries
+# standard imports for the project
 import streamlit as st 
 import pandas as pd 
 import joblib
 import matplotlib.pyplot as plt 
 import seaborn as sns
 
-#Load the pickel file
+# load up the saved pipeline model
 model = joblib.load("pickel_files/fraud_detection_pipeline.pkl")
 
-#Design the Frontend part
+# main app title and subheader setup
 st.title("Fraud Detection App")
 st.subheader("Sentinel Ai")
+ 
+# quick text to show people how the app works
+st.text("This app lets you test individual transactions or drop in a whole dataset to check for fraud using our backend model pipeline.")
 
-#. Add two columns for single transaction and 
-tab1, tab2 = st.tabs(["Single Transaction","Batch Upload"])
-
-# Design the single tab one
+# setting up tabs for layout options
+tab1, tab2 = st.tabs(["Single Transaction", "Batch Upload"])
 with tab1:
     st.subheader("Test onee transaction")
     
@@ -62,4 +63,58 @@ with tab1:
         st.metric("Fraud Probability", f"{final_prob:.2%}")
 
 
-# Add the column 2 as well now   
+# Add the column 2 as well  
+with tab2:
+    #This is really a must inorder for he frauds to be identified
+    st.text("Note: The CSV must contain these columns: type, amount, oldbalanceOrg, newbalanceOrig, oldbalanceDest, newbalanceDest, balanceDiffOrig, balanceDiffDest")
+    st.subheader("Upload an transaction CSV File")
+    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
+
+    if uploaded_file is not None:
+        raw_df = pd.read_csv(uploaded_file)
+        st.text(f"Rows loaded {len(raw_df)}")
+
+        feature_cols = [
+            "type","amount","oldbalanceOrg","newbalanceOrig",
+            "oldbalanceDest","newbalanceDest", "balanceDiffOrig", "balanceDiffDest"
+        ]
+        model_input = raw_df[feature_cols]
+
+        batch_preds = model.predict(model_input)
+        batch_probs = model.predict_proba(model_input)[:,1]
+
+        results_df = raw_df.copy()
+
+
+        results_df["Prediction"] = batch_preds
+        results_df["Fraud_Probability"] = batch_probs.round(2)
+        results_df["Status"] = results_df["Prediction"].map({0:"Legit",1:"Fraud"})
+
+#Add the metrics in the COlumns
+        col1,col2,col3 = st.columns(3) # FIX 1: changed st.column to st.columns
+        col1.metric("Total Records", len(results_df))
+        col2.metric("Fraud Detected", int(batch_preds.sum()))
+        col3.metric("Legit Records", int(len(results_df)- batch_preds.sum()))
+
+        st.markdown("----------")
+        st.subheader("Feature Correlation Matrix")
+
+        numeric_features = ["amount", "oldbalanceOrg", "newbalanceOrig", "oldbalanceDest", "newbalanceDest", "balanceDiffOrig", "balanceDiffDest"] # FIX 2: changed numeric_feature to numeric_features
+        valid_numeric = [c for c in numeric_features if c in raw_df.columns]
+
+        fig, ax = plt.subplots(figsize=(7, 4))
+        sns.heatmap(raw_df[valid_numeric].corr(), annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
+        ax.set_title("Correlation Heatmap")
+
+        
+        plt.tight_layout()
+        st.pyplot(fig)
+
+
+        csv_data = results_df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="Download Results CSV",
+            data=csv_data,
+            file_name="fraud_predictions.csv",
+            mime="text/csv"
+        )
