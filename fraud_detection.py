@@ -107,8 +107,8 @@ with tab2:
         ax.set_title("Correlation Heatmap")
 
         
-        plt.tight_layout()
-        st.pyplot(fig)
+        plt.tight_layout () 
+        st.pyplot(fig) 
 
 
         csv_data = results_df.to_csv(index=False).encode("utf-8")
