@@ -1,5 +1,5 @@
-scikit-learn==1.6.1
-xgboost==2.1.4
+scikit-learn==1.8.0
+xgboost==3.2.0
 streamlit
 pandas
 joblib

@@ -108,13 +108,13 @@ with tab2:
 
         
         plt.tight_layout () 
-        st.pyplot(fig) 
+        st.pyplot(fig)
 
 
         csv_data = results_df.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="Download Results CSV",
-            data=csv_data,
+            data=csv_data, 
             file_name="fraud_predictions.csv",
             mime="text/csv"
         )
